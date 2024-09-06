@@ -26,24 +26,20 @@ defmodule SimpleSse.Router do
   end
 
   get "/conversation" do
-    conn =
-      conn
-      |> put_resp_header("X-Accel-Buffering", "no")
-      |> put_resp_content_type("text/event-stream")
-      |> put_resp_header("Cache-Control", "no-cache")
-      |> send_chunked(200)
-
-    PubSub.subscribe(SimpleSse.PubSub, "user-input")
-
-    ConversationComponent.stream_messages_to(conn)
+    PubSub.subscribe(SimpleSse.PubSub, "messages")
 
     conn
+    |> put_resp_header("X-Accel-Buffering", "no")
+    |> put_resp_content_type("text/event-stream")
+    |> put_resp_header("Cache-Control", "no-cache")
+    |> send_chunked(200)
+    |> ConversationComponent.stream_messages
   end
 
   post "/user-input" do
     message = conn.body_params["message"]
 
-    PubSub.broadcast(SimpleSse.PubSub, "user-input", {:message, message})
+    PubSub.broadcast(SimpleSse.PubSub, "messages", {:user, message})
 
     {:safe, html} = UserInputComponent.render()
 

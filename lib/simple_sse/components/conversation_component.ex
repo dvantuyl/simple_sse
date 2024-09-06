@@ -16,14 +16,14 @@ defmodule SimpleSse.Components.ConversationComponent do
   end
 
 
-  def stream_messages_to(conn) do
+  def stream_messages(conn) do
     receive do
-      {:message, message} ->
+      {:user, message} ->
         conn =
           %SseMessage{event: "conversation", data: "<p>#{message}</p>"}
           |> SseMessage.chunk_to(conn)
 
-        stream_messages_to(conn)
+        stream_messages(conn)
     end
   end
 end
