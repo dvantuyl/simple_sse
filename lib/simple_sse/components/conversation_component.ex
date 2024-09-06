@@ -1,4 +1,5 @@
 defmodule SimpleSse.Components.ConversationComponent do
+  alias SimpleSse.SseMessage
   import Temple
 
   def render(_assigns) do
@@ -14,7 +15,15 @@ defmodule SimpleSse.Components.ConversationComponent do
     end
   end
 
-  def stream(data) do
-    "event: conversation\r\ndata: #{data}\r\n\n"
+
+  def stream_messages_to(conn) do
+    receive do
+      {:message, message} ->
+        conn =
+          %SseMessage{event: "conversation", data: "<p>#{message}</p>"}
+          |> SseMessage.chunk_to(conn)
+
+        stream_messages_to(conn)
+    end
   end
 end

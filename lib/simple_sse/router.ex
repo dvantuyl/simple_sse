@@ -5,7 +5,7 @@ defmodule SimpleSse.Router do
   alias SimpleSse.Components.ConversationComponent
   alias SimpleSse.Layouts.HtmlLayout
   alias SimpleSse.Components.UserInputComponent
-  alias SimpleSse.EventData
+
 
   plug(:match)
 
@@ -33,9 +33,9 @@ defmodule SimpleSse.Router do
       |> put_resp_header("Cache-Control", "no-cache")
       |> send_chunked(200)
 
-    EventData.stream_latest(fn message ->
-      chunk(conn, ConversationComponent.stream("<p>#{message}</p>"))
-    end)
+    PubSub.subscribe(SimpleSse.PubSub, "user-input")
+
+    ConversationComponent.stream_messages_to(conn)
 
     conn
   end
@@ -43,9 +43,9 @@ defmodule SimpleSse.Router do
   post "/user-input" do
     message = conn.body_params["message"]
 
-    PubSub.broadcast(SimpleSse.PubSub, "conversation", {:message, message})
+    PubSub.broadcast(SimpleSse.PubSub, "user-input", {:message, message})
 
-    {:safe, html} = UserInputComponent.render({})
+    {:safe, html} = UserInputComponent.render()
 
     conn
     |> put_resp_content_type("text/plain")
