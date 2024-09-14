@@ -19,3 +19,4 @@ mix run --no-halt
 
 ```
 
+Open browser to `http://localhost:4000`
