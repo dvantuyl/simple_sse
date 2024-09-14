@@ -24,7 +24,7 @@ defmodule SimpleSse.SseMessage do
     :ok
   end
 
-  @spec stream_to(Plug.Conn.t(), module(), (String.t() -> String.t())) :: Plug.Conn.t()
+  @spec stream_to(Plug.Conn.t(), String.t(), (String.t() -> String.t())) :: Plug.Conn.t()
   def stream_to(conn, component, render) do
     receive do
       {:message, message} ->
@@ -34,7 +34,5 @@ defmodule SimpleSse.SseMessage do
 
         stream_to(conn, component, render)
     end
-
-    conn
   end
 end
