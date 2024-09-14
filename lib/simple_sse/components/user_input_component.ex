@@ -1,9 +1,7 @@
 defmodule SimpleSse.Components.UserInputComponent do
   import Temple
 
-  def render(), do: render({})
-
-  def render(_assigns) do
+  def render(_assigns \\ {}) do
     temple do
       form(
         hx_post: "/user-input",

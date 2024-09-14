@@ -8,8 +8,6 @@ defmodule SimpleSse.Application do
   @impl true
   def start(_type, _args) do
     children = [
-      # Starts a worker by calling: SimpleSse.Worker.start_link(arg)
-      # {SimpleSse.Worker, arg}
       {Phoenix.PubSub, name: SimpleSse.PubSub},
       {Bandit, plug: SimpleSse.Router, port: 4000}
     ]

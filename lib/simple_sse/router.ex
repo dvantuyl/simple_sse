@@ -1,11 +1,13 @@
 defmodule SimpleSse.Router do
   use Plug.Router
 
-  alias Phoenix.PubSub
-  alias SimpleSse.Components.ConversationComponent
-  alias SimpleSse.Layouts.HtmlLayout
-  alias SimpleSse.Components.UserInputComponent
+  alias Phoenix.HTML
 
+  alias SimpleSse.SseMessage
+  alias SimpleSse.Layouts.HtmlLayout
+  alias SimpleSse.Components.ConversationComponent
+  alias SimpleSse.Components.UserInputComponent
+  alias SimpleSse.Components.MessageComponent
 
   plug(:match)
 
@@ -18,34 +20,39 @@ defmodule SimpleSse.Router do
   plug(:dispatch)
 
   get "/" do
-    {:safe, html} = HtmlLayout.render()
+    html =
+      HtmlLayout.render()
+      |> HTML.safe_to_string()
 
     conn
     |> put_resp_content_type("text/html")
-    |> send_resp(200, html |> Enum.join(""))
+    |> send_resp(200, html)
   end
 
   get "/conversation" do
-    PubSub.subscribe(SimpleSse.PubSub, "messages")
+    SseMessage.subscribe("user_input")
 
     conn
     |> put_resp_header("X-Accel-Buffering", "no")
     |> put_resp_content_type("text/event-stream")
     |> put_resp_header("Cache-Control", "no-cache")
     |> send_chunked(200)
-    |> ConversationComponent.stream_messages
+    |> SseMessage.stream_to(ConversationComponent, fn message ->
+      MessageComponent.render(message: message)
+      |> HTML.safe_to_string()
+    end)
   end
 
   post "/user-input" do
-    message = conn.body_params["message"]
+    SseMessage.broadcast("user_input", conn.body_params["message"])
 
-    PubSub.broadcast(SimpleSse.PubSub, "messages", {:user, message})
-
-    {:safe, html} = UserInputComponent.render()
+    html =
+      UserInputComponent.render()
+      |> HTML.safe_to_string()
 
     conn
     |> put_resp_content_type("text/plain")
-    |> send_resp(200, html |> Enum.join(""))
+    |> send_resp(200, html)
   end
 
   match _ do
